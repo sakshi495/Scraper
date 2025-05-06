@@ -10,4 +10,6 @@ Structured extraction of Alibaba product data using `crawl4ai`.
 
 ## Usage
 
-1. Install dependencies:
+1. Install dependencies
+2. Run main.py
+   
