@@ -1,0 +1,69 @@
+import asyncio
+import json
+from pathlib import Path
+from bs4 import BeautifulSoup
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, BrowserConfig
+from asyncio import Semaphore
+import os
+import requests
+import random
+
+from config import BASE_DIR,GROQ_API_KEY
+from utils.config_util import PROXY_POOL,USER_AGENTS,BROWSER_CONFIG,CRAWLER_CONFIG
+from utils.file_util import load_urls_from_json, save_json
+from utils.js_util import JS_CODE
+from utils.html_util import extract_product_info, extract_attributes
+# Directory paths
+
+OUTPUT_DIR = BASE_DIR / "output_key_attributes"
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+async def crawl_url(crawler, url: str) -> dict:
+    try:
+        result = await crawler.arun(url, config=CRAWLER_CONFIG)
+        if not result.success or not result.html:
+            return {url: {"error": "Failed or no HTML"}}
+
+        soup = BeautifulSoup(result.html, "html.parser")
+        if soup.select_one('punish-component') or 'captcha' in result.html.lower():
+            return {url: {"error": "Captcha detected"}}
+
+        product_info = extract_product_info(soup)
+        attributes = extract_attributes(soup)
+        product_id = url.split("_")[-1].split(".")[0]
+        filename = f"alibaba_product_{product_id}.json"
+
+        save_json({"url": url, "product_info": product_info, "attributes": attributes}, OUTPUT_DIR / filename)
+        return {url: {"product_info": product_info, "attributes": attributes}}
+
+    except Exception as e:
+        return {url: {"error": str(e)}}
+
+async def process_urls_concurrently(urls: list[str]):
+    results = {}
+
+    async with AsyncWebCrawler(config=BROWSER_CONFIG) as crawler:
+        semaphore = asyncio.Semaphore(5)
+
+        async def crawl_with_limit(url):
+            async with semaphore:
+                return await crawl_url(crawler, url)
+
+        tasks = [crawl_with_limit(url) for url in urls]
+        results_list = await asyncio.gather(*tasks)
+
+        for result in results_list:
+            results.update(result)
+
+        save_json(results, OUTPUT_DIR / "combined_results_new.json")
+        return results
+
+async def main():
+    file_path = BASE_DIR / "tmp" / "extracted_data_details.json"
+    urls = load_urls_from_json(file_path)
+    results = await process_urls_concurrently(urls)
+
+    for url, data in results.items():
+        product_id = url.split("_")[-1].split(".")[0]
+        status = "Error" if "error" in data else f"{len(data.get('attributes', {}))} attributes"
+        print(f"• {product_id}: {status}")

@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+
+# Env
+.env
+
+# Output
+/tmp/
+*.json
+
+# OS files
+.DS_Store
