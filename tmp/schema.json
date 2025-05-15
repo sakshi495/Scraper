@@ -1,0 +1,40 @@
+{
+  "name": "Product Cards",
+  "baseSelector": ".traffic-card-gallery",
+  "baseFields": [
+    {
+      "name": "data_product_id",
+      "type": "attribute",
+      "attribute": "data-product_id"
+    }
+  ],
+  "fields": [
+    {
+      "name": "image_url",
+      "selector":  "img[src*='alicdn.com']:not([src$='.svg'])",
+      "type": "attribute",
+      "attribute": "src"
+    },
+    {
+      "name": "title",
+      "selector": "a.product-title h2",
+      "type": "text"
+    },
+    {
+      "name": "url",
+      "selector": "a.product-image",
+      "type": "attribute",
+      "attribute": "href"
+    },
+    {
+      "name": "price",
+      "selector": "div[data-component='ProductPrice']",
+      "type": "text"
+    },
+    {
+      "name": "moq",
+      "selector": "div[data-component='ProductMoq']",
+      "type": "text"
+    }
+  ]
+}

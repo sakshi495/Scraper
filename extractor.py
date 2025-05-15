@@ -39,23 +39,24 @@ async def extract_alibaba_products():
     extraction_strategy = JsonCssExtractionStrategy(schema)
     config = CrawlerRunConfig(extraction_strategy=extraction_strategy)
 
-    urls = [
-        "https://www.alibaba.com/showroom/laptop_1.html",
-        "https://www.alibaba.com/showroom/laptop_2.html",
-        "https://www.alibaba.com/showroom/laptop_3.html"  # Add as many pages as needed
-    ]
+    urls = []
+    for i in range(1, 17):
+      urls.append(f"https://www.alibaba.com/showroom/laptop_{i}.html" )
 
     async with AsyncWebCrawler() as crawler:
         
       all_data = []
-      for url in urls:
+      for i,url in enumerate(urls):
+        print(f"Processing URL:{i}:{url}")
         results: List[CrawlResult] = await crawler.arun(url, config=config)
 
         for result in results:
-            print(f"URL: {result.url} - Success: {result.success}")
+            # print(f"URL: {result.url} - Success: {result.success}")
             if result.success:
                 data = json.loads(result.extracted_content)
                 for item in data:
+                    item['Source_URL']= url
+                    item["page_number"] = i+1
                     image_url = item.get("image") or item.get("image_url") or item.get("product_image")
                     if image_url:
                         if not image_url.startswith(("http:", "https:")):
