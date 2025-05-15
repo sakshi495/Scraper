@@ -4,10 +4,10 @@ from bs4 import BeautifulSoup
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig
 
 from config import BASE_DIR
-from utils.file_util import load_urls_from_json, save_json
-from utils.html_util import extract_product_info, extract_attributes
-from utils.js_util import JS_CODE
-from utils.config_util import BROWSER_CONFIG
+from utils.file_utils import load_urls_from_json, save_json
+from utils.html_utils import extract_product_info, extract_attributes
+from utils.js_snippets import JS_SCROLL_AND_EXPAND
+from utils.config_constants import BROWSER_CONFIG
 
 # Output directory
 OUTPUT_DIR = BASE_DIR / "output_key_attributes"
@@ -15,7 +15,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Crawler configuration
 CRAWLER_CONFIG = CrawlerRunConfig(
-    js_code=JS_CODE,
+    js_code=JS_SCROLL_AND_EXPAND,
     cache_mode="force_cache",
     page_timeout=90000,
 )
