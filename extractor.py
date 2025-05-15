@@ -39,16 +39,24 @@ async def extract_alibaba_products():
     extraction_strategy = JsonCssExtractionStrategy(schema)
     config = CrawlerRunConfig(extraction_strategy=extraction_strategy)
 
+    urls = []
+    for i in range(1, 17):
+      urls.append(f"https://www.alibaba.com/showroom/laptop_{i}.html" )
+
     async with AsyncWebCrawler() as crawler:
-        results: List[CrawlResult] = await crawler.arun(
-            "https://www.alibaba.com/showroom/laptop.html", config=config
-        )
+        
+      all_data = []
+      for i,url in enumerate(urls):
+        print(f"Processing URL:{i}:{url}")
+        results: List[CrawlResult] = await crawler.arun(url, config=config)
 
         for result in results:
-            print(f"URL: {result.url} - Success: {result.success}")
+            # print(f"URL: {result.url} - Success: {result.success}")
             if result.success:
                 data = json.loads(result.extracted_content)
                 for item in data:
+                    item['Source_URL']= url
+                    item["page_number"] = i+1
                     image_url = item.get("image") or item.get("image_url") or item.get("product_image")
                     if image_url:
                         if not image_url.startswith(("http:", "https:")):
@@ -58,8 +66,9 @@ async def extract_alibaba_products():
 
                     else:
                         item["image_url"] = None  # or some default value if needed
-                
+                all_data.extend(data)
+
                 output_path = BASE_DIR / "tmp" / "extracted_data_details.json"
                 with open(output_path, "w") as f:
-                    json.dump(data, f, indent=2)
-                print(json.dumps(data, indent=2))
+                    json.dump(all_data, f, indent=2)
+                print(json.dumps(all_data, indent=2))
